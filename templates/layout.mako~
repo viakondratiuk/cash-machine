@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*- 
+<!DOCTYPE html>  
+<html>
+<head>
+    
+  <meta charset="utf-8">
+  <title>Pyramid Task's List Tutorial</title>
+  <meta name="author" content="Pylons Project">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <link type="text/css" href="/static/jquery.keypad.css" rel="stylesheet"> 
+  <script type="text/javascript" src="/static/jquery.plugin.js"></script> 
+  <script type="text/javascript" src="/static/jquery.keypad.js"></script>
+<script>
+$(function () {
+$('#inlineKeypad').keypad({onClose: useValue, prompt: '', 
+    closeText: 'Done', closeStatus: 'Use this value'}); 
+         
+function useValue(value) { 
+    alert('The entered value is ' + value); 
+} 
+ 
+$('#inlineDisable').toggle(function() { 
+        $(this).text('Enable'); 
+        $('#inlineKeypad').keypad('disable'); 
+    }, function() { 
+        $(this).text('Disable'); 
+        $('#inlineKeypad').keypad('enable'); 
+});
+});
+</script>
+</head>
+
+<body>
+
+  % if request.session.peek_flash():
+  <div id="flash">
+    <% flash = request.session.pop_flash() %>
+    % for message in flash:
+    ${message}<br>
+    % endfor
+  </div>
+  % endif
+  <div id="page">
+    
+    ${next.body()}
+    <input type="text" id="defaultKeypad" value="" />
+  </div>
+  
+</body>
+</html>
