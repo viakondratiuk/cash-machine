@@ -1,14 +1,32 @@
-mainInputId = "main";
+mainInputId = 'main';
 
-function input(e) {
-    var cc = document.getElementById(mainInputId);
-    var len = cc.value.length;
+function input(el) {
+    var container = document.getElementById(mainInputId);
+    switch (container.className) {
+        case 'cc_number':
+            inputCCNumber(container, el);
+            break;
+        case 'pin':
+            inputPin(container, el);
+            break;
+    }
+}
+
+function inputCCNumber(container, el) {
+    var len = container.value.length;
     if (len <= 18) {
-        cc.value += e.value;
-        origLen = cc.value.replace(/-/g, "").length
+        container.value += el.value;
+        origLen = container.value.replace(/-/g, '').length
         if (origLen % 4 == 0 && Math.floor(origLen / 4) <= 3) {
-            cc.value += "-"
+            container.value += '-'
         }
+    }
+}
+
+function inputPin(container, el) {
+    var len = container.value.length;
+    if (len < 4) {
+        container.value += el.value;
     }
 }
 
