@@ -22,6 +22,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 @view_config(route_name='cc_number', renderer='cc_number/view.mako')
 def cc_number_view(request):
     request.session.pop('cc_number', None)
+    request.session.pop('pin', None)
     if request.method == 'POST' and request.POST.get('cc_number'):
         cc_number = request.POST.get('cc_number')
         valid_cc = ('0000000000000000', '1111111111111111', '2222222222222222')
@@ -44,16 +45,16 @@ def pin_view(request):
         if pin not in valid_pins:
             request.session.flash('Your pin code %s isn\'t valid! Please try again. Left number of tries: 4' % pin_code)
             return HTTPFound(location=request.route_url('error'))
+        request.session['pin'] = pin
         return HTTPFound(location=request.route_url('operations'))
     return {}
 
 @view_config(route_name='operations', renderer='operations.mako')
 def operations_view(request):
-    session = request.session
-    log.warn(session['pin_code'])
-    if 'pin_code' in session and session['pin_code'] is True:
-        return {}
-    return HTTPFound(location=request.route_url('credit_card'))
+    if 'cc_number' not in request.session or 'pin' not in request.session:
+        return HTTPFound(location=request.route_url('cc_number'))
+
+    return {}
 
 @view_config(route_name='balance', renderer='balance.mako')
 def balance_view(request):

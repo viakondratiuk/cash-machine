@@ -62,3 +62,14 @@ li {
     padding: 0 5px;
     display: inline;
 }
+
+table.info {
+	border: 1px solid #666;
+	border-collapse: collapse;
+}
+
+table.info td {
+	border: 1px solid #666;
+	padding: 8px;
+	background-color: #FFF;
+}
