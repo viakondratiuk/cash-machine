@@ -6,7 +6,7 @@ body, html {
     display: table;
 }
 
-a {
+a.toggle {
     text-decoration: none;
     border-bottom: 1px dashed;
 }
@@ -49,4 +49,16 @@ p.error {
     text-align: center;
     border-bottom: 1px solid #D8000C;
     color: #D8000C;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+li {
+    padding: 0 5px;
+    display: inline;
 }

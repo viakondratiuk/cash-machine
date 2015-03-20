@@ -21,27 +21,30 @@ here = os.path.dirname(os.path.abspath(__file__))
 # Start page where we can enter our credit card number
 @view_config(route_name='cc_number', renderer='cc_number/view.mako')
 def cc_number_view(request):
-    if request.method == 'POST':
-        if request.POST.get('cc_number'):
-            cc_number = request.POST.get('cc_number')
-            valid_cc = ('0000000000000000', '1111111111111111', '2222222222222222')
-            if cc_number.replace('-', '') not in valid_cc:
-                request.session.flash('Your credit card %s wasn\'t found! Please try again.' % cc_number)
-                return HTTPFound(location=request.route_url('error'))
-            return HTTPFound(location=request.route_url('pin'))
+    request.session.pop('cc_number', None)
+    if request.method == 'POST' and request.POST.get('cc_number'):
+        cc_number = request.POST.get('cc_number')
+        valid_cc = ('0000000000000000', '1111111111111111', '2222222222222222')
+        if cc_number.replace('-', '') not in valid_cc:
+            request.session.flash('Your credit card %s wasn\'t found! Please try again.' % cc_number)
+            return HTTPFound(location=request.route_url('error'))
+        request.session['cc_number'] = cc_number
+        return HTTPFound(location=request.route_url('pin'))
     return {}
 
 # Page where we can enter our pin code, should be accessible only if cc was valid
 @view_config(route_name='pin', renderer='pin/view.mako')
 def pin_view(request):
-    if request.method == 'POST':
-        if request.POST.get('pin'):
-            pin = request.POST.get('pin')
-            valid_pins = ('1111', '2222', '3333')
-            if pin not in valid_pins:
-                request.session.flash('Your pin code %s isn\'t valid! Please try again. Left number of tries: 4' % pin_code)
-                return HTTPFound(location=request.route_url('error'))
-            return HTTPFound(location=request.route_url('operations'))
+    if 'cc_number' not in request.session:
+        return HTTPFound(location=request.route_url('cc_number'))
+
+    if request.method == 'POST' and request.POST.get('pin'):
+        pin = request.POST.get('pin')
+        valid_pins = ('1111', '2222', '3333')
+        if pin not in valid_pins:
+            request.session.flash('Your pin code %s isn\'t valid! Please try again. Left number of tries: 4' % pin_code)
+            return HTTPFound(location=request.route_url('error'))
+        return HTTPFound(location=request.route_url('operations'))
     return {}
 
 @view_config(route_name='operations', renderer='operations.mako')
