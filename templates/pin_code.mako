@@ -14,15 +14,6 @@
                 p.value += e.value;
             }
         }
-
-        function clearInput() {
-            var cc = document.getElementById("pin_code");
-            cc.value = '';
-        }
-
-        function test(v) {
-            document.getElementById("pin_code").value = v;
-        }
     </script>
 </head>
 <body>

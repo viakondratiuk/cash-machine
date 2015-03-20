@@ -6,6 +6,11 @@ body, html {
     display: table;
 }
 
+a {
+    text-decoration: none;
+    border-bottom: 1px dashed;
+}
+
 #page {
     width: 800px;
     margin: 10px auto;
