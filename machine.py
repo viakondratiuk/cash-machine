@@ -21,8 +21,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 # Start page where we can enter our credit card number
 @view_config(route_name='cc_number', renderer='cc_number/view.mako')
 def cc_number_view(request):
-    request.session.pop('cc_number', None)
-    request.session.pop('pin', None)
+    clear_session(request)
     if request.method == 'POST' and request.POST.get('cc_number'):
         cc_number = request.POST.get('cc_number')
         valid_cc = ('0000000000000000', '1111111111111111', '2222222222222222')
@@ -43,7 +42,7 @@ def pin_view(request):
         pin = request.POST.get('pin')
         valid_pins = ('1111', '2222', '3333')
         if pin not in valid_pins:
-            request.session.flash('Your pin code %s isn\'t valid! Please try again. Left number of tries: 4' % pin_code)
+            request.session.flash('Your pin code isn\'t valid! Please try again. Left number of tries: 4')
             return HTTPFound(location=request.route_url('error'))
         request.session['pin'] = pin
         return HTTPFound(location=request.route_url('operations'))
@@ -51,21 +50,30 @@ def pin_view(request):
 
 @view_config(route_name='operations', renderer='operations.mako')
 def operations_view(request):
-    if 'cc_number' not in request.session or 'pin' not in request.session:
+    if not is_cc_pin_valid(request):
         return HTTPFound(location=request.route_url('cc_number'))
 
     return {}
 
 @view_config(route_name='balance', renderer='balance.mako')
 def balance_view(request):
+    if not is_cc_pin_valid(request):
+        return HTTPFound(location=request.route_url('cc_number'))
     return {}
 
 @view_config(route_name='withdraw', renderer='withdraw.mako')
 def withdraw_view(request):
+    if not is_cc_pin_valid(request):
+        return HTTPFound(location=request.route_url('cc_number'))
     return {}
 
 @view_config(route_name='error', renderer='error.mako')
 def error_view(request):
+    return {}
+
+@view_config(context='pyramid.exceptions.NotFound', renderer='notfound.mako')
+def notfound_view(request):
+    request.response.status = '404 Not Found'
     return {}
 
 # subscribers
@@ -79,6 +87,13 @@ def new_request_subscriber(event):
 
 def close_db_connection(request):
     request.db.close()    
+
+def clear_session(request):
+    request.session.pop('cc_number', None)
+    request.session.pop('pin', None)
+
+def is_cc_pin_valid(request):
+    return 'cc_number' in request.session and 'pin' in request.session
 
 if __name__ == '__main__':
     # configuration settings

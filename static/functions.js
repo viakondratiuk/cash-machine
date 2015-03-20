@@ -9,6 +9,9 @@ function input(el) {
         case 'pin':
             inputPin(container, el);
             break;
+        case 'withdraw':
+            inputWithdraw(container, el);
+            break;
     }
 }
 
@@ -28,6 +31,10 @@ function inputPin(container, el) {
     if (len < 4) {
         container.value += el.value;
     }
+}
+
+function inputWithdraw(container, el) {
+    container.value += el.value;
 }
 
 function clearInput() {
