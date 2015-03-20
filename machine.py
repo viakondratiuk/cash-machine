@@ -24,34 +24,39 @@ def cc_number_view(request):
     clear_session(request)
     if request.method == 'POST' and request.POST.get('cc_number'):
         cc_number = request.POST.get('cc_number')
-        valid_cc = ('0000000000000000', '1111111111111111', '2222222222222222')
-        if cc_number.replace('-', '') not in valid_cc:
+        row = request.db.execute(
+            "select id, cc_number, pin, failed_attempts, status, balance from cards where cc_number = %s"
+            % cc_number.replace('-', '')
+        ).fetchone()
+        if row is not None:
+            card = dict(
+                id=row[0], cc_number=row[1], pin=row[2], failed_attempts=row[3], status=row[4], balance=row[5]
+            )
+        if not card:
             request.session.flash('Your credit card %s wasn\'t found! Please try again.' % cc_number)
             return HTTPFound(location=request.route_url('error'))
-        request.session['cc_number'] = cc_number
+        request.session['card'] = card
         return HTTPFound(location=request.route_url('pin'))
     return {}
 
 # Page where we can enter our pin code, should be accessible only if cc was valid
 @view_config(route_name='pin', renderer='pin/view.mako')
 def pin_view(request):
-    if 'cc_number' not in request.session:
+    if 'card' not in request.session:
         return HTTPFound(location=request.route_url('cc_number'))
 
     if request.method == 'POST' and request.POST.get('pin'):
         pin = request.POST.get('pin')
-        valid_pins = ('1111', '2222', '3333')
-        if pin not in valid_pins:
+        if pin != request.session['card']['pin']:
             request.session.flash('Your pin code isn\'t valid! Please try again. Left number of tries: 4')
             return HTTPFound(location=request.route_url('error'))
-        request.session['pin'] = pin
         return HTTPFound(location=request.route_url('operations'))
     return {}
 
 @view_config(route_name='operations', renderer='operations.mako')
 def operations_view(request):
-    if not is_cc_pin_valid(request):
-        return HTTPFound(location=request.route_url('cc_number'))
+    #if not is_cc_pin_valid(request):
+    #    return HTTPFound(location=request.route_url('cc_number'))
 
     return {}
 
@@ -79,15 +84,25 @@ def notfound_view(request):
 # subscribers
 @subscriber(NewRequest)
 def new_request_subscriber(event):
-    log.warn('Initializing database...')
     request = event.request
     settings = request.registry.settings
-    #request.db = sqlite3.connect(settings['db'])
-    #request.add_finished_callback(close_db_connection)
+    request.db = sqlite3.connect(settings['db'])
+    request.add_finished_callback(close_db_connection)
 
 def close_db_connection(request):
-    request.db.close()    
+    request.db.close()
 
+@subscriber(ApplicationCreated)
+def application_created_subscriber(event):
+    log.warn('Initializing database...')
+    with open(os.path.join(here, 'schema.sql')) as f:
+        stmt = f.read()
+        settings = event.app.registry.settings
+        db = sqlite3.connect(settings['db'])
+        db.executescript(stmt)
+        db.commit()
+
+#custom
 def clear_session(request):
     request.session.pop('cc_number', None)
     request.session.pop('pin', None)
@@ -101,7 +116,7 @@ if __name__ == '__main__':
     settings['reload_all'] = True
     settings['debug_all'] = True
     settings['mako.directories'] = os.path.join(here, 'templates')
-    #settings['db'] = os.path.join(here, 'tasks.db')
+    settings['db'] = os.path.join(here, 'machine.db')
     # session factory
     session_factory = UnencryptedCookieSessionFactoryConfig('itsaseekreet')
     # configuration setup
@@ -111,8 +126,6 @@ if __name__ == '__main__':
     # routes setup
     config.add_route('cc_number', '/')
     config.add_route('pin', '/pin')
-
-
     config.add_route('operations', '/operations')
     config.add_route('balance', '/balance')
     config.add_route('withdraw', '/withdraw')
