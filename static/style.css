@@ -6,9 +6,17 @@ body, html {
     display: table;
 }
 
-body {
-    display: table-cell;
-    vertical-align: middle;
+#page {
+    width: 800px;
+    margin: 10px auto;
+}
+
+h1 {
+    font-size: 18px;
+    padding: 5px 0;
+    text-align: center;
+    border-bottom: 1px solid #222;
+    color: #222;
 }
 
 form {
@@ -22,11 +30,18 @@ input, label {
     margin: 5px auto;
 }
 
+input[type="text"], input[type="password"] {
+    padding: 0 2px;
+    width: 133px;
+}
+
 input[readonly="readonly"] {
     background-color: #E9E9E9;
 }
 
-#credit_card {
-    padding: 0 2px;
-    width: 133px;
+p.error {
+    padding: 5px 0;
+    text-align: center;
+    border-bottom: 1px solid #D8000C;
+    color: #D8000C;
 }

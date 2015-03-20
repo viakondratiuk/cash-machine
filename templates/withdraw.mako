@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,10 +31,10 @@
 </head>
 <body>
     <div id="page">
-        <h1>Credit Card</h1>
-        <form action="/" method="post">
-            <label form="credit_card">Enter your credit card number:</label>
-            <input type="text" id="credit_card" class="" name="credit_card" value="" readonly="readonly" />
+        <h1>Withdraw</h1>
+        <form action="/withdraw" method="post">
+            <label form="withdraw">Enter sum to withdraw:</label>
+            <input type="text" id="withdraw" class="" name="withdraw" value="" readonly="readonly" />
             <table align="center">
                 <tr>
                     <td><input id="btn0" type="button" value="0" onclick="input(this);" /></td>
@@ -55,6 +55,9 @@
                     <td><input id="clear" type="button" value="C" title="Clear" onclick="clearInput();" /></td>
                     <td><input id="btn9" type="button" value="9" onclick="input(this);" /></td>
                     <td><input id="ok" type="submit" title="Enter" value=">" /></td>
+                </tr>
+                <tr>
+                    <td colspan="3"><input id="exit" type="button" value="Exit" title="Exit" onclick="location.href='/'" /></td>
                 </tr>
                 <tr>
                     <td colspan="3">Valid combinations</td>

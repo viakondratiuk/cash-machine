@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import os
 import logging
 import sqlite3
@@ -17,15 +18,51 @@ log = logging.getLogger(__file__)
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-@view_config(route_name='cc', renderer='cc.mako')
-def cc_view(request):
-    return {'start': 'something'}
+# Start page where we can enter our credit card number
+@view_config(route_name='credit_card', renderer='credit_card.mako')
+def credit_card_view(request):
+    if request.method == 'POST':
+        if request.POST.get('credit_card'):
+            credit_card = request.POST.get('credit_card')
+            valid_cards = ('0000000000000000', '1111111111111111', '2222222222222222')
+            if credit_card.replace('-', '') not in valid_cards:
+                request.session.flash('Your credit card %s wasn\'t found! Please try again.' % credit_card)
+                return HTTPFound(location=request.route_url('error'))
+            return HTTPFound(location=request.route_url('pin_code'))
+    return {}
 
-@view_config(route_name='vcard', renderer='validate_card.mako')
-def vcard_view(request):
-    cc = request.POST.get('credit_card')
-    #TODO: if cc found go to pin page, othervise back to cc page and show an error that card not found
-    return {'cc': cc}
+# Page where we can enter our pin code, should be accessible only if cc was valid
+@view_config(route_name='pin_code', renderer='pin_code.mako')
+def pin_code_view(request):
+    if request.method == 'POST':
+        if request.POST.get('pin_code'):
+            pin_code = request.POST.get('pin_code')
+            valid_pins = ('1111', '2222', '3333')
+            if pin_code not in valid_pins:
+                request.session.flash('Your pin code %s isn\'t valid! Please try again. Left number of tries: 4' % pin_code)
+                return HTTPFound(location=request.route_url('error'))
+            return HTTPFound(location=request.route_url('operations'))
+    return {}
+
+@view_config(route_name='operations', renderer='operations.mako')
+def operations_view(request):
+    session = request.session
+    log.warn(session['pin_code'])
+    if 'pin_code' in session and session['pin_code'] is True:
+        return {}
+    return HTTPFound(location=request.route_url('credit_card'))
+
+@view_config(route_name='balance', renderer='balance.mako')
+def balance_view(request):
+    return {}
+
+@view_config(route_name='withdraw', renderer='withdraw.mako')
+def withdraw_view(request):
+    return {}
+
+@view_config(route_name='error', renderer='error.mako')
+def error_view(request):
+    return {}
 
 # subscribers
 @subscriber(NewRequest)
@@ -53,8 +90,12 @@ if __name__ == '__main__':
     # add mako templating
     config.include('pyramid_mako')
     # routes setup
-    config.add_route('cc', '/')
-    config.add_route('vcard', '/vcard')
+    config.add_route('credit_card', '/')
+    config.add_route('pin_code', '/pin_code')
+    config.add_route('operations', '/operations')
+    config.add_route('balance', '/balance')
+    config.add_route('withdraw', '/withdraw')
+    config.add_route('error', '/error')
     # static view setup
     config.add_static_view('static', os.path.join(here, 'static'))
     # scan for @view_config and @subscriber decorators

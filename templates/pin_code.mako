@@ -8,33 +8,29 @@
     <link rel="stylesheet" href="/static/style.css">
     <script type="text/javascript">
         function input(e) {
-            var cc = document.getElementById("credit_card");
-            var len = cc.value.length;
-            if (len <= 18) {
-                cc.value += e.value;
-                origLen = cc.value.replace(/-/g, "").length
-                if (origLen % 4 == 0 && Math.floor(origLen / 4) <= 3) {
-                    cc.value += "-"
-                }
+            var p = document.getElementById("pin_code");
+            var len = p.value.length;
+            if (len < 4) {
+                p.value += e.value;
             }
         }
 
         function clearInput() {
-            var cc = document.getElementById("credit_card");
+            var cc = document.getElementById("pin_code");
             cc.value = '';
         }
 
         function test(v) {
-            document.getElementById("credit_card").value = v;
+            document.getElementById("pin_code").value = v;
         }
     </script>
 </head>
 <body>
     <div id="page">
-        <h1>Credit Card</h1>
-        <form action="/" method="post">
-            <label form="credit_card">Enter your credit card number:</label>
-            <input type="text" id="credit_card" class="" name="credit_card" value="" readonly="readonly" />
+        <h1>Pin Code</h1>
+        <form action="pin_code" method="post">
+            <label form="pin_code">Enter your pin code:</label>
+            <input type="password" id="pin_code" name="pin_code" value="" readonly="readonly" />
             <table align="center">
                 <tr>
                     <td><input id="btn0" type="button" value="0" onclick="input(this);" /></td>
@@ -57,20 +53,23 @@
                     <td><input id="ok" type="submit" title="Enter" value=">" /></td>
                 </tr>
                 <tr>
+                    <td colspan="3"><input id="exit" type="button" value="Exit" title="Exit" onclick="location.href='/'" /></td>
+                </tr>
+                <tr>
                     <td colspan="3">Valid combinations</td>
                 </tr>
                 <tr>
-                    <td><input type="button" value="a" onclick="test('0000-0000-0000-0000');" /></td>
-                    <td><input type="button" value="b" onclick="test('1111-1111-1111-1111');" /></td>
-                    <td><input type="button" value="c" onclick="test('2222-2222-2222-2222');" /></td>
+                    <td><input type="button" value="a" onclick="test('1111');" /></td>
+                    <td><input type="button" value="b" onclick="test('2222');" /></td>
+                    <td><input type="button" value="c" onclick="test('3333');" /></td>
                 </tr>
                 <tr>
                     <td colspan="3">Invalid combinations</td>
                 </tr>
                 <tr>
-                    <td><input type="button" value="a" onclick="test('1234-1234-1234-1234');" /></td>
-                    <td><input type="button" value="b" onclick="test('4567-8901-2345-6789');" /></td>
-                    <td><input type="button" value="c" onclick="test('acbdmmm');" /></td>
+                    <td><input type="button" value="a" onclick="test('1234');" /></td>
+                    <td><input type="button" value="b" onclick="test('0129');" /></td>
+                    <td><input type="button" value="c" onclick="test('acbd');" /></td>
                 </tr>
             </table>
         </form>
