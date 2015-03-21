@@ -16,8 +16,8 @@
             <li><a href="/operations">Operations</a></li>
             <li><a href="/balance">Balance</a></li>
             <li><a href="/withdraw">Withdraw</a></li>
-            <li><a href="/aaaa">404</a></li>
-            <li><a href="/error">Error</a></li>
+            <li><a href="/report">Report</a></li>
+            <li><a href="/report-all">Report-All</a></li>
         </ul>
         ${next.body()}
     </div>

@@ -20,7 +20,7 @@
         <td><input id="btn9" type="button" value="9" onclick="input(this);" /></td>
         <td><input id="ok" type="submit" title="Enter" value=">" /></td>
     </tr>
-    % if section == 'pin':
+    % if section in ('pin', 'withdraw'):
         <tr>
             <td colspan="3"><input id="exit" type="button" value="Exit" title="Exit" onclick="location.href='/'" /></td>
         </tr>

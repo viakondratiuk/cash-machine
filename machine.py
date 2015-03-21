@@ -47,10 +47,10 @@ def pin_view(request):
         pin = md5.md5(request.POST.get('pin')).hexdigest()
         if pin != card['pin']:
             card['failed_attempts'] += 1
-            update_failed_attempts(request, card['failed_attempts'], card['cc_number'])
+            update_failed_attempts(request, card['failed_attempts'])
             if card['failed_attempts'] == 4:
                 m = 'You reached max number of tries. Your card %s was blocked.' % card['cc_dashed']
-                block_card(request, card['cc_number'])
+                block_card(request)
                 clear_session(request)
             else:
                 m = 'Your pin code isn\'t valid! Please try again. Left number of tries: %s' % (4 - card['failed_attempts'])
@@ -86,8 +86,27 @@ def withdraw_view(request):
         if withdraw == 0 or withdraw > card['balance']:
             request.session.flash('There are not enough funds available on the card. Available: %s' % card['balance'])
             return HTTPFound(location=request.route_url('error'))
-        save_withdraw(session, withdraw)
+        save_withdraw(request, withdraw)
+        return HTTPFound(location=request.route_url('report'))
     return {}
+
+@view_config(route_name='report', renderer='report.mako')
+def report_view(request):
+    if not is_card_at_session(request):
+        return HTTPFound(location=request.route_url('cc_number'))
+
+    return {}
+
+@view_config(route_name='report_all', renderer='report_all.mako')
+def report_all_view(request):
+    if not is_card_at_session(request):
+        return HTTPFound(location=request.route_url('cc_number'))
+
+    rs = request.db.execute(
+        "select cc_number, datetime, operation_code, total from cards c inner join operations o on c.id = o.card_id"
+    )
+    operations = [dict(cc_number=row[0], datetime=row[1], operation_code=row[2], total=row[3]) for row in rs.fetchall()]
+    return {'operations': operations}
 
 @view_config(route_name='error', renderer='error.mako')
 def error_view(request):
@@ -111,7 +130,6 @@ def close_db_connection(request):
 
 @subscriber(ApplicationCreated)
 def application_created_subscriber(event):
-    #log.warn('Initializing database...')
     with open(os.path.join(here, 'schema.sql')) as f:
         stmt = f.read()
         settings = event.app.registry.settings
@@ -140,12 +158,14 @@ def get_card(request, cc_number):
             cc_dashed = cc_number
         )
 
-def update_failed_attempts(request, failed_attempts, cc_number):
-    request.db.execute("update cards set failed_attempts = ? where cc_number = ?", (failed_attempts, cc_number))
+def update_failed_attempts(request, failed_attempts):
+    card = request.session['card']
+    request.db.execute("update cards set failed_attempts = ? where id = ?", (failed_attempts, card['id']))
     request.db.commit()
 
-def block_card(request, cc_number):
-    request.db.execute("update cards set status = 'blocked' where cc_number = '%s'" % cc_number)
+def block_card(request):
+    card = request.session['card']
+    request.db.execute("update cards set status = 'blocked' where id = %s" % card['id'])
     request.db.commit()
 
 def save_balance_check(request):
@@ -165,6 +185,9 @@ def save_withdraw(request, withdraw):
         "insert into operations (card_id, operation_code, total) values (?, 'withdraw', ?)", (card['id'], withdraw)
     )
     request.db.commit()
+
+    request.session['card']['balance'] = balance
+    request.session['card']['withdraw'] = withdraw
 
 if __name__ == '__main__':
     # configuration settings
@@ -186,6 +209,7 @@ if __name__ == '__main__':
     config.add_route('balance', '/balance')
     config.add_route('withdraw', '/withdraw')
     config.add_route('report', '/report')
+    config.add_route('report_all', '/report-all')
     config.add_route('error', '/error')
     # static view setup
     config.add_static_view('static', os.path.join(here, 'static'))
