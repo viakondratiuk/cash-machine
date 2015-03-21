@@ -2,6 +2,7 @@
 import os
 import logging
 import sqlite3
+import md5
 
 from pyramid.config import Configurator
 from pyramid.events import NewRequest
@@ -24,16 +25,12 @@ def cc_number_view(request):
     clear_session(request)
     if request.method == 'POST' and request.POST.get('cc_number'):
         cc_number = request.POST.get('cc_number')
-        row = request.db.execute(
-            "select id, cc_number, pin, failed_attempts, status, balance from cards where cc_number = %s"
-            % cc_number.replace('-', '')
-        ).fetchone()
-        if row is not None:
-            card = dict(
-                id=row[0], cc_number=row[1], pin=row[2], failed_attempts=row[3], status=row[4], balance=row[5]
-            )
+        card = get_card(request, cc_number)
         if not card:
             request.session.flash('Your credit card %s wasn\'t found! Please try again.' % cc_number)
+            return HTTPFound(location=request.route_url('error'))
+        if card['status'] == 'blocked':
+            request.session.flash('Your credit card %s is blocked! Please try another card.' % cc_number)
             return HTTPFound(location=request.route_url('error'))
         request.session['card'] = card
         return HTTPFound(location=request.route_url('pin'))
@@ -45,10 +42,19 @@ def pin_view(request):
     if 'card' not in request.session:
         return HTTPFound(location=request.route_url('cc_number'))
 
+    card = request.session['card']
     if request.method == 'POST' and request.POST.get('pin'):
         pin = request.POST.get('pin')
-        if pin != request.session['card']['pin']:
-            request.session.flash('Your pin code isn\'t valid! Please try again. Left number of tries: 4')
+        if md5.md5(pin).hexdigest() != card['pin']:
+            card['failed_attempts'] += 1
+            update_failed_attempts(request, card['failed_attempts'])
+            if card['failed_attempts'] == 4:
+                m = 'You reached max number of tries. Your card %s was blocked.' % card['cc_number']
+                block_card(request, card['cc_number'])
+                clear_session(request)
+            else:
+                m = 'Your pin code isn\'t valid! Please try again. Left number of tries: %s' % (4 - card['failed_attempts'])
+            request.session.flash(m)
             return HTTPFound(location=request.route_url('error'))
         return HTTPFound(location=request.route_url('operations'))
     return {}
@@ -104,11 +110,21 @@ def application_created_subscriber(event):
 
 #custom
 def clear_session(request):
-    request.session.pop('cc_number', None)
-    request.session.pop('pin', None)
+    request.session.pop('card', None)
 
-def is_cc_pin_valid(request):
-    return 'cc_number' in request.session and 'pin' in request.session
+def get_card(request, cc_number):
+    q = "select * from cards where cc_number = %s" % cc_number.replace('-', '')
+    row = request.db.execute(q).fetchone()
+    if row is not None:
+        return dict(id=row[0],cc_number=row[1],pin=row[2],failed_attempts=row[3],status=row[4],balance=row[5])
+
+def update_failed_attempts(request, failed_attempts):
+    request.db.execute("update cards set failed_attempts = %s" % failed_attempts)
+    request.db.commit()
+
+def block_card(request, cc_number):
+    request.db.execute("update cards set status = 'blocked' where cc_number = %s" % cc_number)
+    request.db.commit()
 
 if __name__ == '__main__':
     # configuration settings
