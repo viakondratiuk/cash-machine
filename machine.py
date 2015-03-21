@@ -57,19 +57,20 @@ def pin_view(request):
             request.session.flash(m)
             return HTTPFound(location=request.route_url('error'))
 
+        request.session['card']['valid_pin'] = True
         return HTTPFound(location=request.route_url('operations'))
     return {}
 
 @view_config(route_name='operations', renderer='operations.mako')
 def operations_view(request):
-    if not is_card_at_session(request):
+    if not is_card_pin_at_session(request):
         return HTTPFound(location=request.route_url('cc_number'))
 
     return {}
 
 @view_config(route_name='balance', renderer='balance.mako')
 def balance_view(request):
-    if not is_card_at_session(request):
+    if not is_card_pin_at_session(request):
         return HTTPFound(location=request.route_url('cc_number'))
     save_balance_check(request)
 
@@ -77,7 +78,7 @@ def balance_view(request):
 
 @view_config(route_name='withdraw', renderer='withdraw.mako')
 def withdraw_view(request):
-    if not is_card_at_session(request):
+    if not is_card_pin_at_session(request):
         return HTTPFound(location=request.route_url('cc_number'))
 
     card = request.session['card']
@@ -92,16 +93,13 @@ def withdraw_view(request):
 
 @view_config(route_name='report', renderer='report.mako')
 def report_view(request):
-    if not is_card_at_session(request):
+    if not is_card_pin_at_session(request):
         return HTTPFound(location=request.route_url('cc_number'))
 
     return {}
 
 @view_config(route_name='report_all', renderer='report_all.mako')
 def report_all_view(request):
-    if not is_card_at_session(request):
-        return HTTPFound(location=request.route_url('cc_number'))
-
     rs = request.db.execute(
         "select cc_number, datetime, operation_code, total from cards c inner join operations o on c.id = o.card_id"
     )
@@ -144,6 +142,9 @@ def clear_session(request):
 def is_card_at_session(request):
     return 'card' in request.session
 
+def is_card_pin_at_session(request):
+    return 'card' in request.session and request.session['card']['valid_pin'] is True
+
 def get_card(request, cc_number):
     q = "select * from cards where cc_number = '%s'" % cc_number.replace('-', '')
     row = request.db.execute(q).fetchone()
@@ -155,7 +156,8 @@ def get_card(request, cc_number):
             failed_attempts = row[3],
             status = row[4],
             balance = row[5],
-            cc_dashed = cc_number
+            cc_dashed = cc_number,
+            valid_pin = False
         )
 
 def update_failed_attempts(request, failed_attempts):

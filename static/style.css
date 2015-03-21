@@ -7,6 +7,7 @@ body, html {
 }
 
 a.toggle {
+    text-align: center;
     text-decoration: none;
     border-bottom: 1px dashed;
 }
@@ -72,4 +73,8 @@ table.info td {
 	border: 1px solid #666;
 	padding: 8px;
 	background-color: #FFF;
+}
+
+.center {
+    text-align: center;
 }

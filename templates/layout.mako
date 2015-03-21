@@ -10,7 +10,10 @@
 </head>
 <body>
     <div id="page">
-        <ul>
+        <p class="center">
+            <a class="toggle" href="#" onclick="toggleVisibility('menu'); return false;" title="You can use navigation to test cach machine">Toggle menu</a>
+        </p>
+        <ul id="menu" style="display: none">
             <li><a href="/">Credit Card</a></li>
             <li><a href="/pin">Pin</a></li>
             <li><a href="/operations">Operations</a></li>
