@@ -5,7 +5,7 @@
 <table class="info" align="center">
     <tr>
         <td>Credit card number:</td>
-        <td>${request.session['cc_number']}</td>
+        <td>${request.session['card']['cc_dashed']}</td>
     </tr>
     <tr>
         <td>Date:</td>
@@ -13,7 +13,7 @@
     </tr>
     <tr>
         <td>Balance:</td>
-        <td>???.??</td>
+        <td>${request.session['card']['balance']}</td>
     </tr>
 </table>
 <table align="center">
