@@ -57,6 +57,7 @@ def pin_view(request):
             request.session.flash(m)
             return HTTPFound(location=request.route_url('error'))
 
+        update_failed_attempts(request, 0)
         request.session['card']['valid_pin'] = True
         return HTTPFound(location=request.route_url('operations'))
     return {}
@@ -101,10 +102,14 @@ def report_view(request):
 @view_config(route_name='report_all', renderer='report_all.mako')
 def report_all_view(request):
     rs = request.db.execute(
+        "select cc_number, failed_attempts, status, balance from cards"
+    )
+    cards = [dict(cc_number=row[0], failed_attempts=row[1], status=row[2], balance=row[3]) for row in rs.fetchall()]
+    rs = request.db.execute(
         "select cc_number, datetime, operation_code, total from cards c inner join operations o on c.id = o.card_id"
     )
     operations = [dict(cc_number=row[0], datetime=row[1], operation_code=row[2], total=row[3]) for row in rs.fetchall()]
-    return {'operations': operations}
+    return {'cards': cards, 'operations': operations}
 
 @view_config(route_name='error', renderer='error.mako')
 def error_view(request):

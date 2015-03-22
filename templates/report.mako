@@ -11,10 +11,12 @@
         <td>Date:</td>
         <td>${str(datetime.datetime.now().strftime('%d %b %Y %H:%M:%S'))}</td>
     </tr>
-    <tr>
-        <td>Withdraw:</td>
-        <td>${request.session['card']['withdraw']}</td>
-    </tr>
+    % if 'withdraw' in request.session['card']:
+        <tr>
+            <td>Withdraw:</td>
+            <td>${request.session['card']['withdraw']}</td>
+        </tr>
+    % endif
     <tr>
         <td>Balance:</td>
         <td>${request.session['card']['balance']}</td>
